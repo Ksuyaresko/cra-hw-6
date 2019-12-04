@@ -1,12 +1,11 @@
 import React from 'react';
-import './App.css';
-import { request, GraphQLClient } from 'graphql-request'
+import { url } from '../constants'
+import { request } from 'graphql-request'
 
-const url = 'http://shop-roles.asmer.fs.a-level.com.ua/graphql'
-
-function App() {
+export default function Login(props) {
   const [login, setLogin] = React.useState('')
   const [password, setPassword] = React.useState('')
+  const [error, showError] = React.useState(null)
 
   const handleLoginChange = (e) => {
     setLogin(e.target.value)
@@ -17,23 +16,30 @@ function App() {
 
   const authorize = () => {
     const query = `query log($l:String, $p:String){
-    login(login:$l, password:$p)
-  }`
+      login(login:$l, password:$p)
+    }`
 
-    request(url, query, {
+    request( url, query, {
       l: login,
       p: password
     }).then(user => {
-      localStorage.auth = user.login
+      if(user.login) {
+        localStorage.auth = user.login
+        props.logIn()
+      } else {
+        showError('Wrong Login or Password')
+      }
     })
 
   }
 
-
   return (
-    <main className="wrapper">
       <div className="login">
-        <header className="login__header">Please, login</header>
+        <header className="login__header">
+          { error ?
+              <span>{error}</span> :
+              <span>Please, login</span> }
+        </header>
         <div className="login__input-box">
           <input
               name="login"
@@ -50,8 +56,5 @@ function App() {
           <div className="login__btn" onClick={authorize}>Log In</div>
         </div>
       </div>
-    </main>
   );
 }
-
-export default App;

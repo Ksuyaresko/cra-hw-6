@@ -1,50 +1,64 @@
 import React from 'react';
-import { request } from 'graphql-request'
+import { url, mainUrl } from '../constants'
+import { request, GraphQLClient } from 'graphql-request'
 
 export default function Products(props) {
-  const [login, setLogin] = React.useState('')
-  const [password, setPassword] = React.useState('')
+  const [products, setProducts] = React.useState([])
 
-  const handleLoginChange = (e) => {
-    setLogin(e.target.value)
-  }
-  const handlePassChange = (e) => {
-    setPassword(e.target.value)
-  }
+    React.useEffect( () => {
+        // fetch(url, {
+        //     method: 'POST',
+        //     headers: {
+        //         'Content-Type': 'application/json',
+        //         'Accept': 'application/json',
+        //         'Authorization': `Bearer ${localStorage.auth}`
+        //     },
+        //     body: JSON.stringify({
+        //         query
+        //     })
+        // })
+        //
+        //     .then(data => data.json())
+        //     .then(
+        //         data => {
+        //             console.log(data)
+        //         })
 
-  const authorize = () => {
-    const query = `query log($l:String, $p:String){
-    login(login:$l, password:$p)
-  }`
+        const client = new GraphQLClient( url, {
+            headers: {
+                Authorization: `Bearer ${localStorage.auth}`,
+            },
+        })
 
-    request(props.url, query, {
-      l: login,
-      p: password
-    }).then(user => {
-      localStorage.auth = user.login
-      props.logIn()
-    })
+        const query = `query {
+          GoodFind(query:"[{}]"){
+                _id
+                name
+                description
+                price
+                images {url}
+              }
+            }`
 
-  }
+        client.request(query).then(data => {
+            setProducts(data.GoodFind)
+        })
+
+    }, [])
+
 
   return (
-      <div className="login">
-        <header className="login__header">Please, login</header>
-        <div className="login__input-box">
-          <input
-              name="login"
-              type="text"
-              onChange={handleLoginChange}/>
-        </div>
-        <div className="login__input-box">
-          <input
-              name="password"
-              type="password"
-              onChange={handlePassChange}/>
-        </div>
-        <div className="login__input-box">
-          <div className="login__btn" onClick={authorize}>Log In</div>
-        </div>
+      <div className="product">
+          {products.length > 0 ? products.map(product => (
+              <div key={product._id} className="product__item">
+                  <div className="product__title">{product.name + ' '}</div>
+                  <span className="product__price">${product.price}</span>
+                  <div className="product__desc">{product.description}</div>
+                  <img
+                      src={product.images ? mainUrl + product.images[0].url : './default_product.jpg'}
+                      className="product__img"/>
+              </div>
+          )) : 'loading...'}
       </div>
   );
 }
